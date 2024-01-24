@@ -1,6 +1,8 @@
 import os
 import torch as th
-from core.weight_trajectory import PYTHIA_VARIANTS
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+from core.pythia_trajectory import PYTHIA_VARIANTS, pythia_variant_to_name
 from typing import Collection
 
 
@@ -12,10 +14,26 @@ def visualize_trajectories(
         variants = PYTHIA_VARIANTS
 
     for variant in variants:
-        trajectory_path = os.path.join(trajectory_dir, f"pythia_{variant}_trajectory.pt")
-        trajectory = th.load(trajectory_path)
+        variant_name = pythia_variant_to_name(variant)
+        model_dir = os.path.join(trajectory_dir, variant_name)
+        files = sorted(os.listdir(model_dir))
+        artists = []
 
-        raise NotImplementedError("TODO: Visualize trajectory")
+        final_weights = th.load(os.path.join(model_dir, files[-1]))
+
+        for file in files:
+            weights = th.load(os.path.join(model_dir, file))
+            artists.append(plt.scatter(weights, final_weights))
+
+        ani = animation.ArtistAnimation(
+            plt.figure(),
+            artists,
+            interval=50,
+            blit=True,
+            repeat_delay=1000,
+        )
+
+        ani.save(f"{variant_name}.mp4")
 
 if __name__ == "__main__":
     visualize_trajectories()
