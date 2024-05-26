@@ -1,4 +1,5 @@
 import os
+import argparse
 import torch as th
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
@@ -40,4 +41,12 @@ def visualize_trajectories(
         ani.save(f"{variant_name}.mp4")
 
 if __name__ == "__main__":
-    visualize_trajectories()
+    parser = argparse.ArgumentParser(description="Visualize Pythia weight trajectories")
+    parser.add_argument("--variants", type=str, nargs="+", default=["14m", "31m"], help="Pythia variants to visualize")
+    parser.add_argument("--trajectory_dir", type=str, default="outputs", help="Directory trajectory weights are saved to")
+    args = parser.parse_args()
+
+    visualize_trajectories(
+        args.variants,
+        args.trajectory_dir,
+    )

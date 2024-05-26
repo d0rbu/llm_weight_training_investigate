@@ -21,7 +21,7 @@ PYTHIA_VARIANTS = set([
 ]) | DEDUPED_VARIANTS
 PYTHIA_STEPS = [2 ** i for i in range(10)]  # 1 to 512
 PYTHIA_STEPS.insert(0, 0)  # 0 is the initial checkpoint
-PYTHIA_STEPS.append(1000 * i for i in range(1, 144))  # 1k to 144k
+PYTHIA_STEPS.extend([1000 * i for i in range(1, 144)])  # 1k to 144k
 
 def pythia_variant_to_name(variant: str) -> str:
     if variant in DEDUPED_VARIANTS:
@@ -41,6 +41,12 @@ def save_pythia_weight_trajectory(
 
     with th.no_grad():
         for step in PYTHIA_STEPS:
+            save_path = os.path.join(save_dir, f"{step}.pt")
+
+            if os.path.exists(save_path):
+                print(f"{variant_name} at step {step} already saved")
+                continue
+
             print(f"Loading {variant_name} at step {step}")
             with tempfile.TemporaryDirectory() as temp_dir:
                 model = GPTNeoXForCausalLM.from_pretrained(
@@ -52,4 +58,4 @@ def save_pythia_weight_trajectory(
                 weights = vectorize_model(model)
                 del model
 
-                th.save(weights, os.path.join(save_dir, f"{step}.pt"))
+                th.save(weights, save_path)
