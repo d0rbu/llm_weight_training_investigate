@@ -14,6 +14,7 @@ def visualize_trajectories(
         variants = PYTHIA_VARIANTS
 
     for variant in variants:
+        print(f"Visualizing {variant}")
         variant_name = pythia_variant_to_name(variant)
         model_dir = os.path.join(trajectory_dir, variant_name)
         files = sorted(os.listdir(model_dir))
@@ -22,9 +23,11 @@ def visualize_trajectories(
         final_weights = th.load(os.path.join(model_dir, files[-1]))
 
         for file in files:
+            print(f"Loading {file}")
             weights = th.load(os.path.join(model_dir, file))
             artists.append(plt.scatter(weights, final_weights))
 
+        print("Animating")
         ani = animation.ArtistAnimation(
             plt.figure(),
             artists,
@@ -33,6 +36,7 @@ def visualize_trajectories(
             repeat_delay=1000,
         )
 
+        print("Saving")
         ani.save(f"{variant_name}.mp4")
 
 if __name__ == "__main__":
