@@ -11,7 +11,34 @@ from celluloid import Camera
 
 
 def color_from_name(name: str) -> str | tuple[float, float, float]:
-    return "blue"
+    if "attention.query_key_value" in name:
+        return "brown"
+
+    if "attention.dense" in name:
+        return "peru"
+
+    if "mlp.dense_4h_to_h" in name:
+        return "gold"
+
+    if "mlp.dense_h_to_4h" in name:
+        return "yellowgreen"
+
+    if "input_layernorm" in name:
+        return "forestgreen"
+
+    if "post_attention_layernorm" in name:
+        return "darkcyan"
+
+    if "final_layer_norm" in name:
+        return "slategrey"
+
+    if "embed_in" in name:
+        return "slateblue"
+    
+    if "embed_out" in name:
+        return "hotpink"
+
+    return "black"
 
 
 def visualize_trajectories(
@@ -31,7 +58,6 @@ def visualize_trajectories(
         random_weight_subset = int(random_weight_subset)
 
     for variant in variants:
-        print(f"Visualizing {variant}")
         variant_name = pythia_variant_to_name(variant)
         model_dir = os.path.join(trajectory_dir, variant_name)
         files = os.listdir(model_dir)
