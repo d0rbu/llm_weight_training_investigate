@@ -55,7 +55,7 @@ def save_pythia_weight_trajectory(
                     cache_dir=temp_dir,
                 )
 
-                weights = vectorize_model(model)
+                data = vectorize_model(model)
                 del model
 
-                th.save(weights, save_path)
+                th.save(data, save_path)

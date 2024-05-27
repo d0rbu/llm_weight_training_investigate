@@ -4,8 +4,14 @@ import torch as th
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from core.pythia_trajectory import PYTHIA_VARIANTS, pythia_variant_to_name
+from core.util import group_weights_by_layer
+from tqdm import tqdm
 from typing import Collection
 from celluloid import Camera
+
+
+def color_from_name(name: str) -> str | tuple[float, float, float]:
+    return "blue"
 
 
 def visualize_trajectories(
@@ -14,7 +20,6 @@ def visualize_trajectories(
     output_dir: os.PathLike | str = "viz_outputs",
     random_weight_subset: int | float | None = None,
     num_steps: int | None = None,
-    color: str = "blue",
 ) -> None:
     if variants is None:
         variants = PYTHIA_VARIANTS
@@ -33,38 +38,37 @@ def visualize_trajectories(
         # sort files by filename (not including the extension) to ensure the order is correct
         files.sort(key=lambda x: int(x.split(".")[0]))
 
-        artists = []
-
         print(f"Loading final weights {files[-1]}")
-        final_weights = th.load(os.path.join(model_dir, files[-1]))
+        final_weights, final_weight_sizes = th.load(os.path.join(model_dir, files[-1]))
 
         num_params = random_weight_subset if isinstance(random_weight_subset, int) else int(random_weight_subset * final_weights.shape[0])
         random_weights = th.randperm(final_weights.shape[0])[:num_params]
-
-        final_weights = final_weights[random_weights]
+        final_weights_by_layer = group_weights_by_layer(final_weights, final_weight_sizes, random_weights)
 
         camera = Camera(plt.figure())
         plt.xlim(-2, 2)
         plt.ylim(-2, 2)
 
-        for i, file in enumerate(files):
+        for i, file in enumerate(tqdm(files, total=len(files), desc=f"Visualizing {variant}")):
             if num_steps is not None and i >= num_steps:
                 break
 
-            print(f"Loading {file}")
-            weights = th.load(os.path.join(model_dir, file))
-            selected_weights = weights[random_weights]
-            step_num = file.split(".")[0]
+            step_num = int(file.split(".")[0])
+            weights, weight_sizes = th.load(os.path.join(model_dir, file))
+
+            weights_by_layer = group_weights_by_layer(weights, weight_sizes, random_weights)
 
             # measure the correlation between the final weights and the current weights
-            correlation = th.corrcoef(th.stack([selected_weights, final_weights]))[0, 1].item()
+            correlation = th.corrcoef(th.stack([weights, final_weights]))[0, 1].item()
 
-            print(f"Plotting {file}")
-            plt.scatter(selected_weights, final_weights, color=color)
+            # color each data point based on the layer -> color map
+            for layer_name, layer_weights in weights_by_layer.items():
+                final_layer_weights = final_weights_by_layer[layer_name]
+                plt.scatter(layer_weights, final_layer_weights, color=color_from_name(layer_name))
             plt.legend([f"Step {step_num}\nCorrelation: {correlation:.2f}"], loc="upper right")
             camera.snap()
 
-            del weights, selected_weights  # free up memory after plotting
+            del weights  # free up memory after plotting
 
         print("Animating")
         anim = camera.animate()
@@ -82,7 +86,6 @@ if __name__ == "__main__":
     parser.add_argument("--output_dir", type=str, default="viz_outputs", help="Directory to save visualizations")
     parser.add_argument("--random_weight_subset", type=float, default=None, help="Fraction of weights to visualize or integer number of weights to visualize")
     parser.add_argument("--num_steps", type=int, default=None, help="Number of steps to visualize")
-    parser.add_argument("--color", type=str, default="blue", help="Color of the scatter plot")
     args = parser.parse_args()
 
     visualize_trajectories(
@@ -91,5 +94,4 @@ if __name__ == "__main__":
         args.output_dir,
         args.random_weight_subset,
         args.num_steps,
-        args.color,
     )
