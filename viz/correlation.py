@@ -70,6 +70,7 @@ def visualize_trajectories(
         num_params = random_weight_subset if isinstance(random_weight_subset, int) else int(random_weight_subset * final_weights.shape[0])
         random_weights = th.randperm(final_weights.shape[0])[:num_params]
         final_weights_by_layer = group_weights_by_layer(final_weights, final_weight_sizes, random_weights)
+        final_weights = final_weights[random_weights]
 
         camera = Camera(plt.figure())
         plt.xlim(-2, 2)
@@ -83,6 +84,7 @@ def visualize_trajectories(
             weights, weight_sizes = th.load(os.path.join(model_dir, file))
 
             weights_by_layer = group_weights_by_layer(weights, weight_sizes, random_weights)
+            weights = weights[random_weights]
 
             # measure the correlation between the final weights and the current weights
             correlation = th.corrcoef(th.stack([weights, final_weights]))[0, 1].item()
