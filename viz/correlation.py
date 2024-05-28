@@ -47,6 +47,8 @@ def visualize_trajectories(
     output_dir: os.PathLike | str = "viz_outputs",
     random_weight_subset: int | float | None = None,
     num_steps: int | None = None,
+    xlim: int | float = 1.,
+    ylim: int | float = 1.,
 ) -> None:
     if variants is None:
         variants = PYTHIA_VARIANTS
@@ -73,8 +75,8 @@ def visualize_trajectories(
         final_weights = final_weights[random_weights]
 
         camera = Camera(plt.figure())
-        plt.xlim(-2, 2)
-        plt.ylim(-2, 2)
+        plt.xlim(-xlim, xlim)
+        plt.ylim(-ylim, ylim)
 
         for i, file in enumerate(tqdm(files, total=len(files), desc=f"Visualizing {variant}")):
             if num_steps is not None and i >= num_steps:
@@ -114,6 +116,8 @@ if __name__ == "__main__":
     parser.add_argument("--output_dir", type=str, default="viz_outputs", help="Directory to save visualizations")
     parser.add_argument("--random_weight_subset", type=float, default=None, help="Fraction of weights to visualize or integer number of weights to visualize")
     parser.add_argument("--num_steps", type=int, default=None, help="Number of steps to visualize")
+    parser.add_argument("--xlim", type=float, default=1., help="Limit of x axis in negative and positive directions")
+    parser.add_argument("--ylim", type=float, default=1., help="Limit of y axis in negative and positive directions")
     args = parser.parse_args()
 
     visualize_trajectories(
@@ -122,4 +126,6 @@ if __name__ == "__main__":
         args.output_dir,
         args.random_weight_subset,
         args.num_steps,
+        args.xlim,
+        args.ylim,
     )
